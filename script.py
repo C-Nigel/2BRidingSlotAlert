@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from os import read
 from selenium import webdriver
 from webdriver_manager.chrome import ChromeDriverManager
@@ -5,6 +7,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 from datetime import date, datetime
 from dateutil.relativedelta import relativedelta
+from pyvirtualdisplay import Display
 import selenium.webdriver.support.expected_conditions as ec
 import time
 import telegramBot
@@ -15,7 +18,9 @@ import json
 with open("./credentials.json") as f:
     data = json.load(f)
 
-
+# Initalize virtual display for pi
+display = Display(visible=0, size=(800, 800))
+display.start()
 # driver = webdriver.Chrome(ChromeDriverManager().install())
 driver = webdriver.Chrome()
 
@@ -52,14 +57,14 @@ def continuePageNotSecure():
 
 # Select class 2b or 3a driving course, default is 2b
 def courseSelection():
-    print("Selecting course")
+    print("[datetime.now()] Selecting course")
     time.sleep(2)
     driver.find_element_by_xpath('//input[@value="Submit"]').click()
 
 
 # Select Pratical Training -> Booking tab from sidebar
 def praticalTrainingBookingTab():
-    print("selecting booking tab")
+    print("[datetime.now()] Selecting booking tab")
     time.sleep(2)
     driver.switch_to.frame(driver.find_element(By.NAME, "leftFrame"))
     driver.find_element_by_xpath(
@@ -72,7 +77,7 @@ def praticalTrainingBookingTab():
 def selectSessions(selectionRequired=True):
     driver.switch_to.frame(driver.find_element(By.NAME, "mainFrame"))
     if selectionRequired == True:
-        print("Selecting sessions")
+        print("[datetime.now()] Selecting sessions")
         wait = WebDriverWait(driver, 5)
         wait.until(ec.element_to_be_clickable((By.NAME, "btnSearch")))
         time.sleep(1)
@@ -93,14 +98,14 @@ def selectSessions(selectionRequired=True):
     try:
         alertHandler()
     except:
-        print("No alert to dismiss")
+        print("[datetime.now()] No alert to dismiss")
     driver.switch_to.default_content()
 
 
 # Goes through every row and every cell,
 # and check if a radio button is present
 def readAllRowCells():
-    print("locating mainFrame..")
+    print("[datetime.now()] locating mainFrame..")
     driver.switch_to.frame(driver.find_element(By.NAME, "mainFrame"))
     tableXPath = ""
     try:
@@ -123,7 +128,7 @@ def readAllRowCells():
         pass
     table = driver.find_element_by_xpath(tableXPath)
 
-    print("found table")
+    print("[datetime.now()] found table")
     lessonList = {}
     WebDriverWait(driver, 10).until(ec.presence_of_element_located((By.NAME, "slot")))
     # iterate over all the rows
@@ -227,10 +232,10 @@ def reloadSessionsAvailbility():
         try:
             alertHandler()
         except:
-            print("No alert to dismiss")
+            print("[datetime.now()] No alert to dismiss")
         analyseExtractedData(readAllRowCells())
     except:
-        print("Session expired")
+        print("[datetime.now()] Session expired")
         telegramBot.sendMessage("Session expired, relogging in")
         driver.switch_to.default_content()
         driver.find_element_by_xpath(
@@ -251,11 +256,11 @@ def LogicalFullSteps():
 # Main Program
 driver.get("https://info.bbdc.sg/members-login/")
 
-LogicalFullSteps()
+# LogicalFullSteps()
 # Idie of 3 minutes before attempting to get latest slot availbility
 while True:
-    print("Snoozing for 180 seconds")
-    time.sleep(180)
+    print("Snoozing for 600 seconds")
+    time.sleep(600)
     print("waking up from sleep")
     reloadSessionsAvailbility()
 
