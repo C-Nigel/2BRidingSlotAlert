@@ -3,12 +3,12 @@ bbdc (Bukit Batok Driving Centre)
 Class 2B pratical slot availbility alert via telegram
 
 libraries required:
-pip install selenium
-pip install webdriver-manager
-pip install python-dateutil
-pip install pyTelegramBotAPI
-pip install PyVirtualDisplay (optional for windows)
-pip install xvfbwrapper (optional for windows)
+- pip install selenium
+- pip install webdriver-manager
+- pip install python-dateutil
+- pip install pyTelegramBotAPI
+- pip install PyVirtualDisplay
+- pip install xvfbwrapper
 
 additional steps for linux environment:
 sudo apt-get chromium-chromedriver

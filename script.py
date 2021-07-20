@@ -1,4 +1,5 @@
-# import initlization
+# -*- coding: utf-8 -*-
+
 from os import read
 from selenium import webdriver
 from webdriver_manager.chrome import ChromeDriverManager
@@ -6,6 +7,8 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 from datetime import date, datetime
 from dateutil.relativedelta import relativedelta
+from pyvirtualdisplay import Display
+import platform
 import selenium.webdriver.support.expected_conditions as ec
 import time
 import telegramBot
@@ -21,6 +24,13 @@ try:
     driver = webdriver.Chrome()
 except:
     driver = webdriver.Chrome(ChromeDriverManager().install())
+
+if platform.system() == "windows":
+    pass
+elif platform.system() == "linux":
+    # Initalize virtual display for headless pi
+    display = Display(visible=0, size=(800, 800))
+    display.start()
 
 
 # refresh the webpage
