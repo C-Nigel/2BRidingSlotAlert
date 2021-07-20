@@ -5,7 +5,9 @@ import telebot
 with open("./credentials.json") as f:
     data = json.load(f)
 
+bot = telebot.TeleBot(data["telegramCredentials"]["teleBotID"])
+
 # sends message to user's telegram
 def sendMessage(text):
-    bot = telebot.TeleBot(data["teleBotID"])
-    bot.send_message(data["chatID"], text)
+    bot = telebot.TeleBot(data["telegramCredentials"]["teleBotID"])
+    bot.send_message(data["telegramCredentials"]["chatID"], text)
