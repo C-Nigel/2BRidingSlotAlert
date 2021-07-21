@@ -1,6 +1,10 @@
 import json
 import telebot
+import initlization
+import threading
 
+thread = threading.Thread(target=initlization.generateJSON())
+thread.start()
 # Reads json file
 with open("./credentials.json") as f:
     data = json.load(f)
