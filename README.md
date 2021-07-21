@@ -1,4 +1,4 @@
-# bbdc (Bukit Batok Driving Centre)
+# BBDC (Bukit Batok Driving Centre)
 ## Class 2B pratical slot availbility alert via telegram
 
 ### features:
@@ -11,12 +11,11 @@
 - Automatic relogin when session expires
 
 ### Setup:
-1) Make a copy of credentials sample.json and rename it to credentials.json
-2) Install required libraries (List is below)
-3) Fill in your particulars and bot details (refer to wiki for more info)
-4) Run script.py
+1) Install required libraries (List is below)
+2) Run start.py 
+3) Follow the prompts to fill in your particulars and bot details (refer to wiki for more info)
 
-### libraries required:
+### libraries required: (Windows and Linux)
 - pip install selenium
 - pip install webdriver-manager
 - pip install python-dateutil
@@ -24,6 +23,6 @@
 - pip install PyVirtualDisplay
 - pip install xvfbwrapper
 
-#### additional steps for linux environment:
+#### additional requirement for linux environment:
 - sudo apt-get install chromium-chromedriver
 - sudo apt-get install xvfb

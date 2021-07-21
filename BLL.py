@@ -1,49 +1,38 @@
-# -*- coding: utf-8 -*-
+import json
+import sys
+import time
+from datetime import datetime
 
-from os import read
-from selenium import webdriver
-from webdriver_manager.chrome import ChromeDriverManager
+import selenium.webdriver.support.expected_conditions as ec
+from dateutil.relativedelta import relativedelta
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
-from datetime import date, datetime
-from dateutil.relativedelta import relativedelta
-from pyvirtualdisplay import Display
-import platform
-import selenium.webdriver.support.expected_conditions as ec
-import time
+
 import telegramBot
-import json
 
 
-# Import and read json file
-with open("./credentials.json") as f:
-    data = json.load(f)
-
-
-if platform.system() == "Windows":
-    driver = webdriver.Chrome(ChromeDriverManager().install())
-elif platform.system() == "Linux":
-    # Initalize virtual display for headless pi
-    display = Display(visible=0, size=(800, 800))
-    display.start()
-    driver = webdriver.Chrome()
+# read json file
+def readJSON():
+    with open("./credentials.json") as f:
+        data = json.load(f)
+    return data
 
 
 # refresh the webpage
-def refreshPage():
+def refreshPage(driver):
     driver.refresh()
 
 
 # Switch the control to the Alert window
 # use the accept() method to accept the alert
-def alertHandler():
+def alertHandler(driver):
     time.sleep(1.5)
     alertAgent = driver.switch_to.alert
     alertAgent.accept()
 
 
 # input NRIC, password and click on login
-def loginPage():
+def loginPage(driver):
     print(
         "["
         + datetime.now().strftime("%d/%m/%Y %H:%M:%S")
@@ -51,23 +40,23 @@ def loginPage():
         + "Keying in credentials"
     )
     driver.find_element_by_xpath('//input[@id="txtNRIC"]').send_keys(
-        data["loginCredentials"]["username"]
+        readJSON()["loginCredentials"]["username"]
     )
     driver.find_element_by_xpath('//input[@id="txtPassword"]').send_keys(
-        data["loginCredentials"]["password"]
+        readJSON()["loginCredentials"]["password"]
     )
     time.sleep(3)
     driver.find_element_by_xpath('//input[@id="loginbtn"]').click()
 
 
 # Continue to send data to page despite page not secure warning
-def continuePageNotSecure():
+def continuePageNotSecure(driver):
     time.sleep(2)
     driver.find_element_by_xpath('//button[@id="proceed-button"]').click()
 
 
 # Select class 2b or 3a driving course, default is 2b
-def courseSelection():
+def courseSelection(driver):
     print(
         "[" + datetime.now().strftime("%d/%m/%Y %H:%M:%S") + "] " + "Selecting course"
     )
@@ -76,7 +65,14 @@ def courseSelection():
 
 
 # Select Pratical Training -> Booking tab from sidebar
-def praticalTrainingBookingTab():
+def practicalTrainingBookingTab(driver):
+    try:
+        driver.find_element(By.NAME, "leftFrame")
+    except:
+        print("Unable to select practical booking tab")
+        print("Is course selection page currently present?")
+        print("If so change courseSelectionRequired value to 'true' in credentials.json")
+        sys.exit(1)
     print(
         "["
         + datetime.now().strftime("%d/%m/%Y %H:%M:%S")
@@ -92,7 +88,7 @@ def praticalTrainingBookingTab():
 
 
 # Select all month, all sessions and all days
-def selectSessions(selectionRequired=True):
+def selectSessions(driver, selectionRequired=True):
     driver.switch_to.frame(driver.find_element(By.NAME, "mainFrame"))
     if selectionRequired == True:
         print(
@@ -119,7 +115,7 @@ def selectSessions(selectionRequired=True):
         )
     driver.find_element(By.NAME, "btnSearch").click()
     try:
-        alertHandler()
+        alertHandler(driver)
     except:
         print(
             "["
@@ -132,7 +128,7 @@ def selectSessions(selectionRequired=True):
 
 # Goes through every row and every cell,
 # and check if a radio button is present
-def readAllRowCells():
+def readAllRowCells(driver):
     print(
         "["
         + datetime.now().strftime("%d/%m/%Y %H:%M:%S")
@@ -207,7 +203,7 @@ def readAllRowCells():
 # and send it out to the user via telegram
 def analyseExtractedData(lessonList):
     dateToCheckTill = datetime.today().date() + relativedelta(
-        days=data["generalSettings"]["checkNumberOfDaysInAdvance"]
+        days=readJSON()["generalSettings"]["checkNumberOfDaysInAdvance"]
     )
     messageToBeSentFlag = False
     message = "Slots available:"
@@ -269,7 +265,7 @@ def sessionTimings(sessionNumber):
 
 # Refreshes session availbility page
 # Redirect to login portal page if current browser session has expired
-def reloadSessionsAvailbility():
+def reloadSessionsAvailbility(driver):
     driver.switch_to.frame(driver.find_element(By.NAME, "mainFrame"))
     driver.find_element_by_xpath('//input[@name="btnBack"]').click()
     driver.switch_to.default_content()
@@ -277,7 +273,7 @@ def reloadSessionsAvailbility():
     try:
         selectSessions(False)
         try:
-            alertHandler()
+            alertHandler(driver)
         except:
             print(
                 "["
@@ -302,33 +298,11 @@ def reloadSessionsAvailbility():
 
 
 # Logical steps taken from logging in till sending details to user
-def LogicalFullSteps():
-    loginPage()
-    continuePageNotSecure()
-    if data["generalSettings"]["courseSelectionRequired"] == True:
-        courseSelection()
-    praticalTrainingBookingTab()
-    selectSessions()
-    analyseExtractedData(readAllRowCells())
-
-
-# Main Program
-driver.get("https://info.bbdc.sg/members-login/")
-
-LogicalFullSteps()
-# # Idie of 10 minutes (600 seconds) before attempting to get latest slot availbility
-while True:
-    print(
-        "["
-        + datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-        + "] "
-        + "Snoozing for 600 seconds"
-    )
-    time.sleep(data["generalSettings"]["refreshTimeIntervalInSeconds"])
-    print(
-        "["
-        + datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-        + "] "
-        + " Waking up from sleep"
-    )
-    reloadSessionsAvailbility()
+def LogicalFullSteps(driver):
+    loginPage(driver)
+    continuePageNotSecure(driver)
+    if readJSON()["generalSettings"]["courseSelectionRequired"] == True:
+        courseSelection(driver)
+    practicalTrainingBookingTab(driver)
+    selectSessions(driver)
+    analyseExtractedData(readAllRowCells(driver))
