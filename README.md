@@ -1,8 +1,7 @@
-bbdc (Bukit Batok Driving Centre)
+# bbdc (Bukit Batok Driving Centre)
+## Class 2B pratical slot availbility alert via telegram
 
-Class 2B pratical slot availbility alert via telegram
-
-libraries required:
+### libraries required:
 - pip install selenium
 - pip install webdriver-manager
 - pip install python-dateutil
@@ -14,14 +13,16 @@ additional steps for linux environment:
 sudo apt-get chromium-chromedriver
 sudo apt-get install xvfb
 
-features:
+### features:
+- Application is Unix and Windows ready
 - Fully automated login
 - Customizable number of days in advance you would like the bot to check
-- Cusomizable deley period between each check
+- Cusomizable delay period between each check
 - Option to skip course selection page if necessary
 - Sends you list of available slots to you based on preferences
+- Automatic relogin when session expires
 
-Setup:
-1) Make a copy of credentials sample.json and rename it to credentaials.json
-2) fill in your particulars and bot details (refer to wiki for more info)
+### Setup:
+1) Make a copy of credentials sample.json and rename it to credentials.json
+2) fill in your lgoin and bot details (refer to wiki for more info)
 3) run script.py

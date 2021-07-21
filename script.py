@@ -20,17 +20,13 @@ with open("./credentials.json") as f:
     data = json.load(f)
 
 
-try:
-    driver = webdriver.Chrome()
-except:
+if platform.system() == "Windows":
     driver = webdriver.Chrome(ChromeDriverManager().install())
-
-if platform.system() == "windows":
-    pass
-elif platform.system() == "linux":
+elif platform.system() == "Linux":
     # Initalize virtual display for headless pi
     display = Display(visible=0, size=(800, 800))
     display.start()
+    driver = webdriver.Chrome()
 
 
 # refresh the webpage
