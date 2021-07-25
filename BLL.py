@@ -271,7 +271,7 @@ def reloadSessionsAvailbility(driver):
     driver.switch_to.default_content()
     # Check if kicked out of session
     try:
-        selectSessions(False)
+        selectSessions(driver, False)
         try:
             alertHandler(driver)
         except:
@@ -281,7 +281,7 @@ def reloadSessionsAvailbility(driver):
                 + "] "
                 + "No alert to dismiss"
             )
-        analyseExtractedData(readAllRowCells())
+        analyseExtractedData(readAllRowCells(driver))
     except:
         print(
             "["
