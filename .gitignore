@@ -6,3 +6,4 @@ credentials.json
 css
 js
 *.gif
+__pycache__
