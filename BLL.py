@@ -294,7 +294,7 @@ def reloadSessionsAvailbility(driver):
         driver.find_element_by_xpath(
             '//a[@href="https://info.bbdc.sg/members-login/"]'
         ).click()
-        LogicalFullSteps()
+        LogicalFullSteps(driver)
 
 
 # Logical steps taken from logging in till sending details to user
