@@ -1,6 +1,8 @@
 import json
 import os
 
+import telegramBot
+
 
 def generateJSON():
     if os.path.exists("./credentials.json"):
@@ -31,12 +33,24 @@ def generateJSON():
 
         data["loginCredentials"]["username"] = input("Enter your BBDC login ID: ")
         data["loginCredentials"]["password"] = input("Enter your BBDC password: ")
-        data["telegramCredentials"]["teleBotID"] = input("Enter your telegram bot ID: ")
-        data["telegramCredentials"]["chatID"] = input("Enter your telegram chat ID: ")
+        while True:
+            botID = input("Enter your telegram bot ID (Case Sensitive): ")
+            botIDIsValid = telegramBot.validateBotID(botID)
+            if botIDIsValid == True:
+                data["telegramCredentials"]["teleBotID"] = botID
+                while True:
+                    chatID = telegramBot.getChatId(botID)
+                    if chatID != None:
+                        break
+                data["telegramCredentials"]["chatID"] = chatID
+                telegramBot.sendMessage("Device successfully connected", botID, chatID)
+                break
+            else:
+                print("Bot ID provided is not valid")
         courseSelectionRequirement = input(
-            "Does course selection page show after logging in?[Y/n] "
+            "Does course selection page show after logging in? [Y/n] "
         )
-        if courseSelectionRequirement == "y" or courseSelectionRequirement == "Y":
+        if courseSelectionRequirement.lower() == "y":
             data["generalSettings"]["courseSelectionRequired"] = True
         else:
             data["generalSettings"]["courseSelectionRequired"] = False
