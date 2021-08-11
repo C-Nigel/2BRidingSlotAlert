@@ -22,19 +22,13 @@ elif platform.system() == "Linux":
 driver.get("https://info.bbdc.sg/members-login/")
 
 BLL.LogicalFullSteps(driver)
-# # Idie of 10 minutes (600 seconds) before attempting to get latest slot availbility
+# # Idie of number of seconds defined in credentials.json before attempting to get latest slot availbility
 while True:
-    print(
-        "["
-        + datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-        + "] "
-        + "Snoozing for 600 seconds"
+    BLL.printMessage(
+        "Snoozing for "
+        + str(BLL.readJSON()["generalSettings"]["refreshTimeIntervalInSeconds"])
+        + " seconds"
     )
     time.sleep(BLL.readJSON()["generalSettings"]["refreshTimeIntervalInSeconds"])
-    print(
-        "["
-        + datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-        + "] "
-        + " Waking up from sleep"
-    )
+    BLL.printMessage(" Waking up from sleep")
     BLL.reloadSessionsAvailbility(driver)

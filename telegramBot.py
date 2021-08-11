@@ -5,6 +5,7 @@ import time
 import requests
 import telebot
 
+import BLL
 import initlization
 
 
@@ -31,7 +32,7 @@ def getUrl(url):
 # Get last chat message sent from user
 def getChatId(botID):
     try:
-        print("Attempting to connect to your device..")
+        BLL.printMessage("Attempting to connect to your device..")
         URL = "https://api.telegram.org/bot{}/getUpdates".format(botID)
         updates = getUrl(URL)
         num_updates = len(updates["result"])
@@ -40,10 +41,10 @@ def getChatId(botID):
         chat_id = updates["result"][last_update]["message"]["chat"]["id"]
         return chat_id
     except:
-        print(
+        BLL.printMessage(
             "Unable to connect to your device. Be Sure to start the bot with '/start'."
         )
-        print("Retrying in 15 seconds")
+        BLL.printMessage("Retrying in 15 seconds")
         time.sleep(15)
         return None
 

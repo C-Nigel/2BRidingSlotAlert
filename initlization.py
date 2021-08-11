@@ -1,6 +1,7 @@
 import json
 import os
 
+import BLL
 import telegramBot
 
 
@@ -46,7 +47,7 @@ def generateJSON():
                 telegramBot.sendMessage("Device successfully connected", botID, chatID)
                 break
             else:
-                print("Bot ID provided is not valid")
+                BLL.printMessage("Bot ID provided is not valid")
         courseSelectionRequirement = input(
             "Does course selection page show after logging in? [Y/n] "
         )

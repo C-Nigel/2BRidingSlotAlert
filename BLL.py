@@ -11,6 +11,10 @@ from selenium.webdriver.support.wait import WebDriverWait
 import telegramBot
 
 
+def printMessage(message):
+    print("[" + datetime.now().strftime("%d/%m/%Y %H:%M:%S") + "] " + message)
+
+
 # read json file
 def readJSON():
     with open("./credentials.json") as f:
@@ -33,12 +37,7 @@ def alertHandler(driver):
 
 # input NRIC, password and click on login
 def loginPage(driver):
-    print(
-        "["
-        + datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-        + "] "
-        + "Keying in credentials"
-    )
+    printMessage("Keying in credentials")
     driver.find_element_by_xpath('//input[@id="txtNRIC"]').send_keys(
         readJSON()["loginCredentials"]["username"]
     )
@@ -57,9 +56,7 @@ def continuePageNotSecure(driver):
 
 # Select class 2b or 3a driving course, default is 2b
 def courseSelection(driver):
-    print(
-        "[" + datetime.now().strftime("%d/%m/%Y %H:%M:%S") + "] " + "Selecting course"
-    )
+    printMessage("Selecting course")
     time.sleep(2)
     driver.find_element_by_xpath('//input[@value="Submit"]').click()
 
@@ -69,16 +66,13 @@ def practicalTrainingBookingTab(driver):
     try:
         driver.find_element(By.NAME, "leftFrame")
     except:
-        print("Unable to select practical booking tab")
-        print("Is course selection page currently present?")
-        print("If so change courseSelectionRequired value to 'true' in credentials.json")
+        printMessage("Unable to select practical booking tab")
+        printMessage("Is course selection page currently present?")
+        printMessage(
+            "If so change courseSelectionRequired value to 'true' in credentials.json"
+        )
         sys.exit(1)
-    print(
-        "["
-        + datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-        + "] "
-        + "Selecting booking tab"
-    )
+    printMessage("Selecting booking tab")
     time.sleep(2)
     driver.switch_to.frame(driver.find_element(By.NAME, "leftFrame"))
     driver.find_element_by_xpath(
@@ -91,12 +85,7 @@ def practicalTrainingBookingTab(driver):
 def selectSessions(driver, selectionRequired=True):
     driver.switch_to.frame(driver.find_element(By.NAME, "mainFrame"))
     if selectionRequired == True:
-        print(
-            "["
-            + datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-            + "] "
-            + "Selecting sessions"
-        )
+        printMessage("Selecting sessions")
         wait = WebDriverWait(driver, 5)
         wait.until(ec.element_to_be_clickable((By.NAME, "btnSearch")))
         time.sleep(1)
@@ -107,34 +96,19 @@ def selectSessions(driver, selectionRequired=True):
         driver.find_element(By.NAME, "allDay").click()
         time.sleep(2)
     else:
-        print(
-            "["
-            + datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-            + "] "
-            + "Selecting session not required"
-        )
+        printMessage("Selecting session not required")
     driver.find_element(By.NAME, "btnSearch").click()
     try:
         alertHandler(driver)
     except:
-        print(
-            "["
-            + datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-            + "] "
-            + "No alert to dismiss"
-        )
+        printMessage("No alert to dismiss")
     driver.switch_to.default_content()
 
 
 # Goes through every row and every cell,
 # and check if a radio button is present
 def readAllRowCells(driver):
-    print(
-        "["
-        + datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-        + "] "
-        + "Locating mainFrame.."
-    )
+    printMessage("Locating mainFrame..")
     driver.switch_to.frame(driver.find_element(By.NAME, "mainFrame"))
     tableXPath = ""
     try:
@@ -157,7 +131,7 @@ def readAllRowCells(driver):
         pass
     table = driver.find_element_by_xpath(tableXPath)
 
-    print("[" + datetime.now().strftime("%d/%m/%Y %H:%M:%S") + "] " + "Found table")
+    printMessage("Found table")
     lessonList = {}
     WebDriverWait(driver, 10).until(ec.presence_of_element_located((By.NAME, "slot")))
     # iterate over all the rows
@@ -170,11 +144,8 @@ def readAllRowCells(driver):
                 pass
             else:
                 # Check if session is selectable
-                print(
-                    "["
-                    + datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-                    + "] "
-                    + "Checking "
+                printMessage(
+                    "Checking "
                     + dateOfLesson[0]
                     + " "
                     + dateOfLesson[1]
@@ -187,13 +158,7 @@ def readAllRowCells(driver):
                         listOfAvailableSessions.append(sessionNumber)
                 except:
                     pass
-        print(
-            "["
-            + datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-            + "] "
-            + str(listOfAvailableSessions)
-            + " sessions available"
-        )
+        printMessage(str(listOfAvailableSessions) + " sessions available")
         lessonList[dateOfLesson[0]] = listOfAvailableSessions
     driver.switch_to.default_content()
     return lessonList
@@ -275,20 +240,10 @@ def reloadSessionsAvailbility(driver):
         try:
             alertHandler(driver)
         except:
-            print(
-                "["
-                + datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-                + "] "
-                + "No alert to dismiss"
-            )
+            printMessage("No alert to dismiss")
         analyseExtractedData(readAllRowCells(driver))
     except:
-        print(
-            "["
-            + datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-            + "] "
-            + "Current session expired, relogging in"
-        )
+        printMessage("Current session expired, relogging in")
         telegramBot.sendMessage("Session expired, relogging in")
         driver.switch_to.default_content()
         driver.find_element_by_xpath(
@@ -300,6 +255,13 @@ def reloadSessionsAvailbility(driver):
 # Logical steps taken from logging in till sending details to user
 def LogicalFullSteps(driver):
     loginPage(driver)
+    try:
+        alertHandler(driver)
+        refreshPage(driver)
+        LogicalFullSteps(driver)
+        return
+    except:
+        pass
     continuePageNotSecure(driver)
     if readJSON()["generalSettings"]["courseSelectionRequired"] == True:
         courseSelection(driver)
