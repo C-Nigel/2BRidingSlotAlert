@@ -1,7 +1,8 @@
+import datetime
 import json
 import os
 
-import BLL
+# import BLL
 import telegramBot
 
 
@@ -47,7 +48,7 @@ def generateJSON():
                 telegramBot.sendMessage("Device successfully connected", botID, chatID)
                 break
             else:
-                BLL.printMessage("Bot ID provided is not valid")
+                print("[" + datetime.now().strftime("%d/%m/%Y %H:%M:%S") + "] " + "Bot ID provided is not valid")
         courseSelectionRequirement = input(
             "Does course selection page show after logging in? [Y/n] "
         )
