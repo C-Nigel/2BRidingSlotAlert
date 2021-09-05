@@ -4,6 +4,7 @@ import os
 
 # import BLL
 import telegramBot
+import miscFunctions
 
 
 def generateJSON():
@@ -46,11 +47,12 @@ def generateJSON():
                         break
                 data["telegramCredentials"]["chatID"] = chatID
                 telegramBot.sendMessage("Device successfully connected", botID, chatID)
+                miscFunctions.printMessage("Device successfully connected")
                 break
             else:
-                print("[" + datetime.now().strftime("%d/%m/%Y %H:%M:%S") + "] " + "Bot ID provided is not valid")
+                miscFunctions.printMessage("Bot ID provided is not valid")
         courseSelectionRequirement = input(
-            "Does course selection page show after logging in? [Y/n] "
+            "Does course selection page show after logging in? [Y/n]: "
         )
         if courseSelectionRequirement.lower() == "y":
             data["generalSettings"]["courseSelectionRequired"] = True

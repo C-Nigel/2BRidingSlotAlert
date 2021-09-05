@@ -6,8 +6,8 @@ import time
 import requests
 import telebot
 
-# import BLL
 import initlization
+import miscFunctions
 
 
 # sends message to user's telegram
@@ -33,7 +33,7 @@ def getUrl(url):
 # Get last chat message sent from user
 def getChatId(botID):
     try:
-        print("[" + datetime.now().strftime("%d/%m/%Y %H:%M:%S") + "] " + "Attempting to connect to your device..")
+        miscFunctions.printMessage("Attempting to connect to your device..")
         URL = "https://api.telegram.org/bot{}/getUpdates".format(botID)
         updates = getUrl(URL)
         num_updates = len(updates["result"])
@@ -42,10 +42,10 @@ def getChatId(botID):
         chat_id = updates["result"][last_update]["message"]["chat"]["id"]
         return chat_id
     except:
-        print("[" + datetime.now().strftime("%d/%m/%Y %H:%M:%S") + "] " + 
+        miscFunctions.printMessage(
             "Unable to connect to your device. Be Sure to start the bot with '/start'."
         )
-        print("[" + datetime.now().strftime("%d/%m/%Y %H:%M:%S") + "] " + "Retrying in 15 seconds")
+        miscFunctions.printMessage("Retrying in 15 seconds")
         time.sleep(15)
         return None
 
@@ -68,5 +68,3 @@ thread.start()
 # Reads json file
 with open("./credentials.json") as f:
     data = json.load(f)
-
-bot = telebot.TeleBot(data["telegramCredentials"]["teleBotID"])
