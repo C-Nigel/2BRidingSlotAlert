@@ -7,6 +7,7 @@ import selenium.webdriver.support.expected_conditions as ec
 from dateutil.relativedelta import relativedelta
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
+from selenium.common.exceptions import StaleElementReferenceException
 
 import telegramBot
 import miscFunctions
@@ -94,7 +95,12 @@ def selectSessions(driver, selectionRequired=True):
         time.sleep(2)
     else:
         miscFunctions.printMessage("Selecting session not required")
-    driver.find_element(By.NAME, "btnSearch").click()
+    try:
+        driver.find_element(By.NAME, "btnSearch").click()
+    except StaleElementReferenceException as Exception:
+        miscFunctions.printMessage('StaleElementReferenceException while trying to click on search button,finding element again.')
+        time.sleep(2)
+        driver.find_element(By.NAME, "btnSearch").click()
     try:
         alertHandler(driver)
     except:

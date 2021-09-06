@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import platform
+import sys
 import time
 from datetime import datetime
 
@@ -10,6 +11,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 
 import BLL
 import miscFunctions
+import telegramBot
 
 
 if __name__ == "__main__":
@@ -27,11 +29,17 @@ if __name__ == "__main__":
     BLL.LogicalFullSteps(driver)
     # # Idie of number of seconds defined in credentials.json before attempting to get latest slot availbility
     while True:
-        miscFunctions.printMessage(
-            "Snoozing for "
-            + str(BLL.readJSON()["generalSettings"]["refreshTimeIntervalInSeconds"])
-            + " seconds"
-        )
-        time.sleep(BLL.readJSON()["generalSettings"]["refreshTimeIntervalInSeconds"])
-        miscFunctions.printMessage("Waking up from sleep")
-        BLL.reloadSessionsAvailbility(driver)
+        try:
+            miscFunctions.printMessage(
+                "Snoozing for "
+                + str(BLL.readJSON()["generalSettings"]["refreshTimeIntervalInSeconds"])
+                + " seconds"
+            )
+            time.sleep(BLL.readJSON()["generalSettings"]["refreshTimeIntervalInSeconds"])
+            miscFunctions.printMessage("Waking up from sleep")
+            BLL.reloadSessionsAvailbility(driver)
+        except Exception as e:
+            telegramBot.sendMessage("An error has occurred. Application is exiting..")
+            telegramBot.sendMessage(e)
+            miscFunctions.printMessage(e)
+            sys.exit(1)
