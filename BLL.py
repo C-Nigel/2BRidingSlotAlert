@@ -33,6 +33,13 @@ def readCredentials():
     return data
 
 
+# Read session pratical lesson sessions file
+def readLessonSessions():
+    with open(os.path.join("practicalLessonSessions.yaml"), encoding="utf-8") as f:
+        data = yaml.load(f, Loader=yaml.FullLoader)
+    return data
+
+
 # Refresh the webpage
 def refreshPage(driver):
     driver.refresh()
@@ -173,7 +180,17 @@ def readAllRowCells(driver):
                 try:
                     if obj.find_element(By.TAG_NAME, "input"):
                         sessionNumber = index - 1
-                        listOfAvailableSessions.append(sessionNumber)
+                        if (
+                        sessionNumber
+                        in BLL.readPreferences()["Preferences"][
+                            "Select session to alert"
+                        ]
+                        and BLL.readPreferences()["Preferences"][
+                            "Select session to alert"
+                        ][sessionNumber]
+                        == True
+                        ):
+                            listOfAvailableSessions.append(sessionNumber)
                 except:
                     pass
         BLL.printMessage(str(listOfAvailableSessions) + " sessions available")
@@ -226,14 +243,10 @@ def AddWebsiteToText(message):
 
 # keeps track of session timings in relation to session number
 def sessionTimings(sessionNumber):
-    with open(os.path.join("practicalLessonSessions.yaml"), encoding="utf-8") as file:
-        # The FullLoader parameter handles the conversion from YAML
-        # scalar values to Python the dictionary format
-        sessions = yaml.load(file, Loader=yaml.FullLoader)
-        if sessionNumber in sessions["Session Timings"]:
-            return sessions["Session Timings"][sessionNumber]
-        else:
-            return "Error retrieving timing"
+    if sessionNumber in readLessonSessions()["Session Timings"]:
+        return readLessonSessions()["Session Timings"][sessionNumber]
+    else:
+        return "Error retrieving timing"
 
 
 # Refreshes session availbility page
@@ -251,8 +264,9 @@ def reloadSessionsAvailbility(driver):
             BLL.printMessage("No alert to dismiss")
         analyseExtractedData(readAllRowCells(driver))
     except:
+        if BLL.readPreferences()["Preferences"]["Notify on session expired"] == True:
+            telegramBot.sendMessage("Session expired, relogging in")
         BLL.printMessage("Current session expired, relogging in")
-        telegramBot.sendMessage("Session expired, relogging in")
         driver.switch_to.default_content()
         driver.find_element_by_xpath(
             '//a[@href="https://info.bbdc.sg/members-login/"]'

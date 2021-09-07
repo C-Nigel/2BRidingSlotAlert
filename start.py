@@ -43,5 +43,5 @@ if __name__ == "__main__":
         except Exception as e:
             telegramBot.sendMessage("An error has occurred. Application is exiting..")
             telegramBot.sendMessage(e)
-            BLL.printMessage(e)
+            BLL.printMessage(repr(e))
             sys.exit(1)
