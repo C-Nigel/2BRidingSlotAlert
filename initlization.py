@@ -1,63 +1,101 @@
-from datetime import datetime
-import json
 import os
+from datetime import datetime
 
-# import BLL
+import yaml
+
+import BLL
 import telegramBot
-import miscFunctions
 
 
-def generateJSON():
-    if os.path.exists("./credentials.json"):
-        pass
-    else:
-        f = open("./credentials.json", "w+")
-        f.write(
-            """ {
-                "loginCredentials": {
-                    "username": "",
-                    "password": ""
+# Creates a new settings.yaml file with contents if file does not exist
+def generateSettingsTemplate():
+    if not os.path.exists(os.path.join("settings", "preferences.yaml")):
+        settingsTemplate = {
+            "Preferences": {
+                "Course selection required": False,
+                "Check number of days in advance": 7,
+                "Refresh time interval": 600,
+                "Notify on session expired": True,
+                "Notify on session availbility": {
+                    1: True,
+                    2: True,
+                    3: True,
+                    4: True,
+                    5: True,
+                    6: True,
+                    7: True,
+                    8: True,
                 },
-                "telegramCredentials": {
-                    "teleBotID": "",
-                    "chatID": ""
-                },
-                "generalSettings": {
-                    "courseSelectionRequired": false,
-                    "checkNumberOfDaysInAdvance": 7,
-                    "refreshTimeIntervalInSeconds": 600
-                }
-            } """
+            },
+        }
+
+        courseSelectionRequirement = input(
+            "["
+            + datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+            + "] "
+            + "Does course selection page show after logging in? [Y/n]: "
         )
-        f.close()
+        if courseSelectionRequirement.lower() == "y":
+            settingsTemplate["Preferences"]["Course selection required"] = True
+        elif courseSelectionRequirement.lower() == "n":
+            settingsTemplate["Preferences"]["Course selection required"] = False
+        else:
+            BLL.printMessage("Course selection page setting has been set to False")
+            settingsTemplate["Preferences"]["Course selection required"] = False
 
-        with open("credentials.json", "r") as jsonFile:
-            data = json.load(jsonFile)
+        if not os.path.exists(os.path.join("settings")):
+            os.mkdir(os.path.join("settings"))
+        with open(
+            os.path.join("settings", "preferences.yaml"), "w", encoding="utf-8"
+        ) as File:
+            yaml.dump(settingsTemplate, File)
 
-        data["loginCredentials"]["username"] = input("Enter your BBDC login ID: ")
-        data["loginCredentials"]["password"] = input("Enter your BBDC password: ")
+
+# Creates a new credentials.yaml file with user inputs if file does not exist
+def generateCredentialsTemplate():
+    if not os.path.exists(os.path.join("settings", "credentials.yaml")):
+        credentialsTemplate = {
+            "Login credentials": {"Login ID": None, "Password": None},
+            "Telegram credentials": {"telegram bot ID": None, "Chat ID": None},
+        }
+
+        credentialsTemplate["Login credentials"]["Login ID"] = input(
+            "["
+            + datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+            + "] "
+            + "Enter your BBDC login ID: "
+        )
+        credentialsTemplate["Login credentials"]["Password"] = input(
+            "["
+            + datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+            + "] "
+            + "Enter your BBDC password: "
+        )
+
         while True:
-            botID = input("Enter your telegram bot ID (Case Sensitive): ")
+            botID = input(
+                "["
+                + datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+                + "] "
+                + "Enter your telegram bot ID (Case Sensitive): "
+            )
             botIDIsValid = telegramBot.validateBotID(botID)
             if botIDIsValid == True:
-                data["telegramCredentials"]["teleBotID"] = botID
+                credentialsTemplate["Telegram credentials"]["telegram bot ID"] = botID
                 while True:
                     chatID = telegramBot.getChatId(botID)
                     if chatID != None:
                         break
-                data["telegramCredentials"]["chatID"] = chatID
+                credentialsTemplate["Telegram credentials"]["Chat ID"] = chatID
                 telegramBot.sendMessage("Device successfully connected", botID, chatID)
-                miscFunctions.printMessage("Device successfully connected")
+                BLL.printMessage("Device successfully connected")
                 break
             else:
-                miscFunctions.printMessage("Bot ID provided is not valid")
-        courseSelectionRequirement = input(
-            "Does course selection page show after logging in? [Y/n]: "
-        )
-        if courseSelectionRequirement.lower() == "y":
-            data["generalSettings"]["courseSelectionRequired"] = True
-        else:
-            data["generalSettings"]["courseSelectionRequired"] = False
+                BLL.printMessage("Bot ID provided is not valid")
 
-        with open("credentials.json", "w") as jsonFile:
-            json.dump(data, jsonFile)
+        if not os.path.exists(os.path.join("settings")):
+            os.mkdir(os.path.join("settings"))
+        with open(
+            os.path.join("settings", "credentials.yaml"), "w", encoding="utf-8"
+        ) as File:
+            yaml.dump(credentialsTemplate, File)

@@ -1,5 +1,6 @@
 .vscode
-settings.yaml
+credentials.yaml
+preferences.yaml
 credentials.json
 *.html
 *.css

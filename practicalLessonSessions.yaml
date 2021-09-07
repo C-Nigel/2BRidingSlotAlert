@@ -1,0 +1,29 @@
+---
+Session Timings:
+  1: 07:30 - 09:10
+  2: 09:20 – 11:00
+  3: 11:30 – 13:10
+  4: 13:20 – 15:00
+  5: 15:20 – 17:00
+  6: 17:10 – 18:50
+  7: 19:20 – 21:00
+  8: 21:10 – 22:50
+Peak hour sessions:
+  Weekdays:
+    1: Non-peak
+    2: Non-peak
+    3: Non-peak
+    4: Non-peak
+    5: Non-peak
+    6: Peak
+    7: Peak
+    8: Peak
+  Weekends:
+    1: Peak
+    2: Peak
+    3: Peak
+    4: Peak
+    5: null
+    6: null
+    7: null
+    8: null

@@ -3,19 +3,21 @@
 import platform
 import sys
 import time
-from datetime import datetime
 
 from pyvirtualdisplay import Display
 from selenium import webdriver
 from webdriver_manager.chrome import ChromeDriverManager
 
 import BLL
-import miscFunctions
+import initlization
 import telegramBot
-
 
 if __name__ == "__main__":
     # Main Program
+    # Setup credentials and preferences YAML files
+    initlization.generateCredentialsTemplate()
+    initlization.generateSettingsTemplate()
+
     if platform.system() == "Windows":
         driver = webdriver.Chrome(ChromeDriverManager().install())
     elif platform.system() == "Linux":
@@ -27,19 +29,19 @@ if __name__ == "__main__":
     driver.get("https://info.bbdc.sg/members-login/")
 
     BLL.LogicalFullSteps(driver)
-    # # Idie of number of seconds defined in credentials.json before attempting to get latest slot availbility
+    # # Idie of number of seconds defined in preferences.yaml before attempting to get latest slot availbility
     while True:
         try:
-            miscFunctions.printMessage(
+            BLL.printMessage(
                 "Snoozing for "
-                + str(BLL.readJSON()["generalSettings"]["refreshTimeIntervalInSeconds"])
+                + str(BLL.readPreferences()["Preferences"]["Refresh time interval"])
                 + " seconds"
             )
-            time.sleep(BLL.readJSON()["generalSettings"]["refreshTimeIntervalInSeconds"])
-            miscFunctions.printMessage("Waking up from sleep")
+            time.sleep(BLL.readPreferences()["Preferences"]["Refresh time interval"])
+            BLL.printMessage("Waking up from sleep")
             BLL.reloadSessionsAvailbility(driver)
         except Exception as e:
             telegramBot.sendMessage("An error has occurred. Application is exiting..")
             telegramBot.sendMessage(e)
-            miscFunctions.printMessage(e)
+            BLL.printMessage(e)
             sys.exit(1)

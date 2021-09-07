@@ -1,20 +1,19 @@
-from datetime import datetime
 import json
-import threading
 import time
 
 import requests
 import telebot
 
-import initlization
-import miscFunctions
+import BLL
 
 
 # sends message to user's telegram
 def sendMessage(text, botID="", ChatID=""):
     if botID == "" and ChatID == "":
-        bot = telebot.TeleBot(data["telegramCredentials"]["teleBotID"])
-        bot.send_message(data["telegramCredentials"]["chatID"], text)
+        bot = telebot.TeleBot(
+            BLL.readCredentials()["Telegram credentials"]["telegram bot ID"]
+        )
+        bot.send_message(BLL.readCredentials()["Telegram credentials"]["Chat ID"], text)
     elif botID != "" and ChatID != "":
         bot = telebot.TeleBot(botID)
         bot.send_message(ChatID, text)
@@ -33,7 +32,7 @@ def getUrl(url):
 # Get last chat message sent from user
 def getChatId(botID):
     try:
-        miscFunctions.printMessage("Attempting to connect to your device..")
+        BLL.printMessage("Attempting to connect to your device..")
         URL = "https://api.telegram.org/bot{}/getUpdates".format(botID)
         updates = getUrl(URL)
         num_updates = len(updates["result"])
@@ -42,14 +41,15 @@ def getChatId(botID):
         chat_id = updates["result"][last_update]["message"]["chat"]["id"]
         return chat_id
     except:
-        miscFunctions.printMessage(
+        BLL.printMessage(
             "Unable to connect to your device. Be Sure to start the bot with '/start'."
         )
-        miscFunctions.printMessage("Retrying in 15 seconds")
+        BLL.printMessage("Retrying in 15 seconds")
         time.sleep(15)
         return None
 
 
+# Check if a telegram Bot exists with the ID provided
 def validateBotID(botID):
     # r = requests.get("https://api.telegram.org/bot"+ botID +"/getme")
     URL = "https://api.telegram.org/bot{}/getMe".format(botID)
@@ -57,14 +57,3 @@ def validateBotID(botID):
         return True
     else:
         return False
-    # chatID = getChatId(URL)
-    # send_message(URL, "text", chatID)
-
-
-thread = threading.Thread(target=initlization.generateJSON())
-thread.start()
-
-
-# Reads json file
-with open("./credentials.json") as f:
-    data = json.load(f)

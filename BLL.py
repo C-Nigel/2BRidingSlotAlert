@@ -1,46 +1,59 @@
-import json
+import os
 import sys
 import time
 from datetime import datetime
 
 import selenium.webdriver.support.expected_conditions as ec
+import yaml
 from dateutil.relativedelta import relativedelta
+from selenium.common.exceptions import StaleElementReferenceException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
-from selenium.common.exceptions import StaleElementReferenceException
 
+import BLL
 import telegramBot
-import miscFunctions
 
 
-# read json file
-def readJSON():
-    with open("./credentials.json") as f:
-        data = json.load(f)
+# Print statements with date and time tag
+def printMessage(message):
+    print("[" + datetime.now().strftime("%d/%m/%Y %H:%M:%S") + "] " + message)
+
+
+# Read preferences file
+def readPreferences():
+    with open(os.path.join("settings", "preferences.yaml"), encoding="utf-8") as f:
+        data = yaml.load(f, Loader=yaml.FullLoader)
     return data
 
 
-# refresh the webpage
+# Read credentials file
+def readCredentials():
+    with open(os.path.join("settings", "credentials.yaml"), encoding="utf-8") as f:
+        data = yaml.load(f, Loader=yaml.FullLoader)
+    return data
+
+
+# Refresh the webpage
 def refreshPage(driver):
     driver.refresh()
 
 
 # Switch the control to the Alert window
-# use the accept() method to accept the alert
+# Use the accept() method to accept the alert
 def alertHandler(driver):
     time.sleep(1.5)
     alertAgent = driver.switch_to.alert
     alertAgent.accept()
 
 
-# input NRIC, password and click on login
+# Input NRIC, password and click on login
 def loginPage(driver):
-    miscFunctions.printMessage("Keying in credentials")
+    BLL.printMessage("Keying in credentials")
     driver.find_element_by_xpath('//input[@id="txtNRIC"]').send_keys(
-        readJSON()["loginCredentials"]["username"]
+        readCredentials()["Login credentials"]["Login ID"]
     )
     driver.find_element_by_xpath('//input[@id="txtPassword"]').send_keys(
-        readJSON()["loginCredentials"]["password"]
+        readCredentials()["Login credentials"]["Password"]
     )
     time.sleep(3)
     driver.find_element_by_xpath('//input[@id="loginbtn"]').click()
@@ -54,7 +67,7 @@ def continuePageNotSecure(driver):
 
 # Select class 2b or 3a driving course, default is 2b
 def courseSelection(driver):
-    miscFunctions.printMessage("Selecting course")
+    BLL.printMessage("Selecting course")
     time.sleep(2)
     driver.find_element_by_xpath('//input[@value="Submit"]').click()
 
@@ -64,13 +77,13 @@ def practicalTrainingBookingTab(driver):
     try:
         driver.find_element(By.NAME, "leftFrame")
     except:
-        miscFunctions.printMessage("Unable to select practical booking tab")
-        miscFunctions.printMessage("Is course selection page currently present?")
-        miscFunctions.printMessage(
-            "If so change courseSelectionRequired value to 'true' in credentials.json and restart application"
+        BLL.printMessage("Unable to select practical booking tab")
+        BLL.printMessage("Is course selection page currently present?")
+        BLL.printMessage(
+            """Change "Course selection required" value to 'true' in "settings/preferences.yaml" and re-start application"""
         )
         sys.exit(1)
-    miscFunctions.printMessage("Selecting booking tab")
+    BLL.printMessage("Selecting booking tab")
     time.sleep(2)
     driver.switch_to.frame(driver.find_element(By.NAME, "leftFrame"))
     driver.find_element_by_xpath(
@@ -83,7 +96,7 @@ def practicalTrainingBookingTab(driver):
 def selectSessions(driver, selectionRequired=True):
     driver.switch_to.frame(driver.find_element(By.NAME, "mainFrame"))
     if selectionRequired == True:
-        miscFunctions.printMessage("Selecting sessions")
+        BLL.printMessage("Selecting sessions")
         wait = WebDriverWait(driver, 5)
         wait.until(ec.element_to_be_clickable((By.NAME, "btnSearch")))
         time.sleep(1)
@@ -94,24 +107,26 @@ def selectSessions(driver, selectionRequired=True):
         driver.find_element(By.NAME, "allDay").click()
         time.sleep(2)
     else:
-        miscFunctions.printMessage("Selecting session not required")
+        BLL.printMessage("Selecting session not required")
     try:
         driver.find_element(By.NAME, "btnSearch").click()
     except StaleElementReferenceException as Exception:
-        miscFunctions.printMessage('StaleElementReferenceException while trying to click on search button,finding element again.')
+        BLL.printMessage(
+            "StaleElementReferenceException while trying to click on search button,finding element again."
+        )
         time.sleep(2)
         driver.find_element(By.NAME, "btnSearch").click()
     try:
         alertHandler(driver)
     except:
-        miscFunctions.printMessage("No alert to dismiss")
+        BLL.printMessage("No alert to dismiss")
     driver.switch_to.default_content()
 
 
 # Goes through every row and every cell,
 # and check if a radio button is present
 def readAllRowCells(driver):
-    miscFunctions.printMessage("Locating mainFrame..")
+    BLL.printMessage("Locating mainFrame..")
     driver.switch_to.frame(driver.find_element(By.NAME, "mainFrame"))
     tableXPath = ""
     try:
@@ -134,7 +149,7 @@ def readAllRowCells(driver):
         pass
     table = driver.find_element_by_xpath(tableXPath)
 
-    miscFunctions.printMessage("Found table")
+    BLL.printMessage("Found table")
     lessonList = {}
     WebDriverWait(driver, 10).until(ec.presence_of_element_located((By.NAME, "slot")))
     # iterate over all the rows
@@ -147,7 +162,7 @@ def readAllRowCells(driver):
                 pass
             else:
                 # Check if session is selectable
-                miscFunctions.printMessage(
+                BLL.printMessage(
                     "Checking "
                     + dateOfLesson[0]
                     + " "
@@ -161,7 +176,7 @@ def readAllRowCells(driver):
                         listOfAvailableSessions.append(sessionNumber)
                 except:
                     pass
-        miscFunctions.printMessage(str(listOfAvailableSessions) + " sessions available")
+        BLL.printMessage(str(listOfAvailableSessions) + " sessions available")
         lessonList[dateOfLesson[0]] = listOfAvailableSessions
     driver.switch_to.default_content()
     return lessonList
@@ -171,7 +186,7 @@ def readAllRowCells(driver):
 # and send it out to the user via telegram
 def analyseExtractedData(lessonList):
     dateToCheckTill = datetime.today().date() + relativedelta(
-        days=readJSON()["generalSettings"]["checkNumberOfDaysInAdvance"]
+        days=readPreferences()["Preferences"]["Check number of days in advance"]
     )
     messageToBeSentFlag = False
     message = "Slots available:"
@@ -211,24 +226,14 @@ def AddWebsiteToText(message):
 
 # keeps track of session timings in relation to session number
 def sessionTimings(sessionNumber):
-    if sessionNumber == 1:
-        return "07:30 – 09:10"
-    elif sessionNumber == 2:
-        return "09:20 – 11:00"
-    elif sessionNumber == 3:
-        return "11:30 – 13:10"
-    elif sessionNumber == 4:
-        return "13:20 – 15:00"
-    elif sessionNumber == 5:
-        return "15:20 – 17:00"
-    elif sessionNumber == 6:
-        return "17:10 – 18:50"
-    elif sessionNumber == 7:
-        return "19:20 – 21:00"
-    elif sessionNumber == 8:
-        return "21:10 – 22:50"
-    else:
-        return "Error getting timing"
+    with open(os.path.join("practicalLessonSessions.yaml"), encoding="utf-8") as file:
+        # The FullLoader parameter handles the conversion from YAML
+        # scalar values to Python the dictionary format
+        sessions = yaml.load(file, Loader=yaml.FullLoader)
+        if sessionNumber in sessions["Session Timings"]:
+            return sessions["Session Timings"][sessionNumber]
+        else:
+            return "Error retrieving timing"
 
 
 # Refreshes session availbility page
@@ -243,10 +248,10 @@ def reloadSessionsAvailbility(driver):
         try:
             alertHandler(driver)
         except:
-            miscFunctions.printMessage("No alert to dismiss")
+            BLL.printMessage("No alert to dismiss")
         analyseExtractedData(readAllRowCells(driver))
     except:
-        miscFunctions.printMessage("Current session expired, relogging in")
+        BLL.printMessage("Current session expired, relogging in")
         telegramBot.sendMessage("Session expired, relogging in")
         driver.switch_to.default_content()
         driver.find_element_by_xpath(
@@ -266,7 +271,7 @@ def LogicalFullSteps(driver):
     except:
         pass
     continuePageNotSecure(driver)
-    if readJSON()["generalSettings"]["courseSelectionRequired"] == True:
+    if readPreferences()["Preferences"]["Course selection required"] == True:
         courseSelection(driver)
     practicalTrainingBookingTab(driver)
     selectSessions(driver)
