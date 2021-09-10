@@ -16,7 +16,7 @@ def generateSettingsTemplate():
                 "Check number of days in advance": 7,
                 "Refresh time interval": 600,
                 "Notify on session expired": True,
-                "Select session to alert": {
+                "Include session's availbility in alert": {
                     1: True,
                     2: True,
                     3: True,

@@ -181,14 +181,14 @@ def readAllRowCells(driver):
                     if obj.find_element(By.TAG_NAME, "input"):
                         sessionNumber = index - 1
                         if (
-                        sessionNumber
-                        in BLL.readPreferences()["Preferences"][
-                            "Select session to alert"
-                        ]
-                        and BLL.readPreferences()["Preferences"][
-                            "Select session to alert"
-                        ][sessionNumber]
-                        == True
+                            sessionNumber
+                            in BLL.readPreferences()["Preferences"][
+                                "Include session's availbility in alert"
+                            ]
+                            and BLL.readPreferences()["Preferences"][
+                                "Include session's availbility in alert"
+                            ][sessionNumber]
+                            == True
                         ):
                             listOfAvailableSessions.append(sessionNumber)
                 except:
@@ -217,7 +217,9 @@ def analyseExtractedData(lessonList):
                 )
                 messageToBeSentFlag = True
                 for sessionNumber in lessonList[lessonListDatesKey]:
-                    message = AddSessionDetailsToText(message, sessionNumber)
+                    message = AddSessionDetailsToText(
+                        message, dateOfSessions, sessionNumber
+                    )
     message = AddWebsiteToText(message)
     if messageToBeSentFlag:
         telegramBot.sendMessage(message)
@@ -230,14 +232,16 @@ def AddDateDetailsToText(message, dateOfSession, dayOfSession):
 
 
 # Concatenate session number into the message
-def AddSessionDetailsToText(message, sessionNumber):
+def AddSessionDetailsToText(message, dateOfSessions, sessionNumber):
     message += "\nSession " + str(sessionNumber) + ": " + sessionTimings(sessionNumber)
+    if isPeakSession(dateOfSessions, sessionNumber):
+        message += "*"
     return message
 
 
 # Adds BBDC's link to end of the message for users' convenience
 def AddWebsiteToText(message):
-    message += "\n\nhttps://info.bbdc.sg/members-login/"
+    message += "\n\n*Peak Periods\n\nhttps://info.bbdc.sg/members-login/"
     return message
 
 
@@ -247,6 +251,25 @@ def sessionTimings(sessionNumber):
         return readLessonSessions()["Session Timings"][sessionNumber]
     else:
         return "Error retrieving timing"
+
+
+# Check if a particular session falls into peak period
+def isPeakSession(date, sessionNumber):
+    isPeak = False
+    dayOfWeek = date.weekday()
+    if dayOfWeek < 5:
+        if (
+            BLL.readLessonSessions()["Peak hour sessions"]["Weekdays"][sessionNumber]
+            == "Peak"
+        ):
+            isPeak = True
+    else:
+        if (
+            BLL.readLessonSessions()["Peak hour sessions"]["Weekends"][sessionNumber]
+            == "Peak"
+        ):
+            isPeak = True
+    return isPeak
 
 
 # Refreshes session availbility page
