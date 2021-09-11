@@ -41,7 +41,14 @@ if __name__ == "__main__":
             BLL.printMessage("Waking up from sleep")
             BLL.reloadSessionsAvailbility(driver)
         except Exception as e:
-            telegramBot.sendMessage("An error has occurred. Application is exiting..")
+            telegramBot.sendMessage("An error has occurred. Application is retarting..")
             telegramBot.sendMessage(e)
             BLL.printMessage(repr(e))
-            sys.exit(1)
+            driver.quit()
+            driver = None
+            if platform.system() == "Windows":
+                driver = webdriver.Chrome(ChromeDriverManager().install())
+            elif platform.system() == "Linux":
+                driver = webdriver.Chrome()
+            driver.get("https://info.bbdc.sg/members-login/")
+            BLL.LogicalFullSteps(driver)
