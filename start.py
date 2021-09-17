@@ -47,9 +47,12 @@ if __name__ == "__main__":
 
     driver = startDriver(True)
 
+    restartDriverFlag = True
     while True:
         try:
-            BLL.LogicalFullSteps(driver)
+            if restartDriverFlag:
+                BLL.LogicalFullSteps(driver)
+                restartDriverFlag = False
             BLL.printMessage(
                 "Snoozing for "
                 + str(BLL.readPreferences()["Preferences"]["Refresh time interval"])
@@ -65,4 +68,5 @@ if __name__ == "__main__":
             telegramBot.sendMessage(e)
             BLL.printMessage(repr(e))
             driver = restartDriver(driver)
+            restartDriverFlag = True
             time.sleep(5)
