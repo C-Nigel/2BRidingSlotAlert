@@ -87,7 +87,7 @@ def practicalTrainingBookingTab(driver):
         BLL.printMessage("Unable to select practical booking tab")
         BLL.printMessage("Is course selection page currently present?")
         BLL.printMessage(
-            """Change "Course selection required" value to 'true' in "settings/preferences.yaml" and re-start application"""
+            """Change "Course selection required" value to 'True' in "settings/preferences.yaml" and re-start application"""
         )
         sys.exit(1)
     BLL.printMessage("Selecting booking tab")
@@ -99,10 +99,30 @@ def practicalTrainingBookingTab(driver):
     driver.switch_to.default_content()
 
 
-# Select all month, all sessions and all days
-def selectSessions(driver, selectionRequired=True):
+def countNumberOfAvailableSubjects(driver):
+    practicalTrainingBookingTab(driver)
     driver.switch_to.frame(driver.find_element(By.NAME, "mainFrame"))
-    if selectionRequired == True:
+    subjectCount = driver.find_elements_by_xpath("/html/body/table/tbody/tr/td[2]/form/table/tbody/tr[1]/td[2]/descendant::input")
+    printMessage("Number of subjects currently present: " + str(len(subjectCount)))
+    driver.switch_to.default_content()
+    return len(subjectCount)
+
+
+def readSubjectSelected(driver, selectedSubject):
+    driver.switch_to.frame(driver.find_element(By.NAME, "mainFrame"))
+    subjectName = driver.find_element_by_xpath("/html/body/table/tbody/tr/td[2]/form/table/tbody/tr[1]/td[2]/input[" + str(selectedSubject) + "]").get_attribute("value")
+    driver.switch_to.default_content()
+    return subjectName
+
+
+# Select all month, all sessions and all days
+def selectSessions(driver, subjectSelection):
+    driver.switch_to.frame(driver.find_element(By.NAME, "mainFrame"))
+    driver.find_element_by_xpath("/html/body/table/tbody/tr/td[2]/form/table/tbody/tr[1]/td[2]/input[" + str(subjectSelection) + "]").click()
+    if driver.find_element_by_xpath("/html/body/table/tbody/tr/td[2]/form/table/tbody/tr[1]/td[2]/input[" + str(subjectSelection) + "]").is_selected():
+        driver.switch_to.default_content()
+        subjectName = readSubjectSelected(driver, subjectSelection)
+        driver.switch_to.frame(driver.find_element(By.NAME, "mainFrame"))
         BLL.printMessage("Selecting sessions")
         wait = WebDriverWait(driver, 5)
         wait.until(ec.element_to_be_clickable((By.NAME, "btnSearch")))
@@ -113,21 +133,23 @@ def selectSessions(driver, selectionRequired=True):
         time.sleep(1)
         driver.find_element(By.NAME, "allDay").click()
         time.sleep(2)
+        try:
+            driver.find_element(By.NAME, "btnSearch").click()
+        except StaleElementReferenceException as Exception:
+            BLL.printMessage(
+                "StaleElementReferenceException while trying to click on search button,finding element again."
+            )
+            time.sleep(2)
+            driver.find_element(By.NAME, "btnSearch").click()
+        try:
+            alertHandler(driver)
+        except:
+            BLL.printMessage("No alert to dismiss")
+        driver.switch_to.default_content()
+        return True, subjectName
     else:
-        BLL.printMessage("Selecting session not required")
-    try:
-        driver.find_element(By.NAME, "btnSearch").click()
-    except StaleElementReferenceException as Exception:
-        BLL.printMessage(
-            "StaleElementReferenceException while trying to click on search button,finding element again."
-        )
-        time.sleep(2)
-        driver.find_element(By.NAME, "btnSearch").click()
-    try:
-        alertHandler(driver)
-    except:
-        BLL.printMessage("No alert to dismiss")
-    driver.switch_to.default_content()
+        driver.switch_to.default_content()
+        return False, None
 
 
 # Goes through every row and every cell,
@@ -135,94 +157,93 @@ def selectSessions(driver, selectionRequired=True):
 def readAllRowCells(driver):
     BLL.printMessage("Locating mainFrame..")
     driver.switch_to.frame(driver.find_element(By.NAME, "mainFrame"))
-    tableXPath = ""
-    try:
-        driver.find_element_by_xpath(
-            "/html/body/table/tbody/tr/td[2]/form/table[1]/tbody/tr[10]/td/table/tbody"
-        )
-        tableXPath = (
-            "/html/body/table/tbody/tr/td[2]/form/table[1]/tbody/tr[10]/td/table/tbody"
-        )
-    except:
-        pass
-    try:
-        driver.find_element_by_xpath(
-            "/html/body/table/tbody/tr/td[2]/form/table[1]/tbody/tr[9]/td/table/tbody"
-        )
-        tableXPath = (
-            "/html/body/table/tbody/tr/td[2]/form/table[1]/tbody/tr[9]/td/table/tbody"
-        )
-    except:
-        pass
-    table = driver.find_element_by_xpath(tableXPath)
-
-    BLL.printMessage("Found table")
     lessonList = {}
-    WebDriverWait(driver, 10).until(ec.presence_of_element_located((By.NAME, "slot")))
-    # iterate over all the rows
-    for row in table.find_elements(By.TAG_NAME, "tr")[2:]:
-        listOfAvailableSessions = []
-        for index, obj in enumerate(row.find_elements(By.TAG_NAME, "td")):
-            if index == 0:
-                dateOfLesson = obj.text.split("\n")
-            elif index == 1:
-                pass
-            else:
-                # Check if session is selectable
-                BLL.printMessage(
-                    "Checking "
-                    + dateOfLesson[0]
-                    + " "
-                    + dateOfLesson[1]
-                    + " session "
-                    + str(index - 1)
-                )
-                try:
-                    if obj.find_element(By.TAG_NAME, "input"):
-                        sessionNumber = index - 1
-                        if (
-                            sessionNumber
-                            in BLL.readPreferences()["Preferences"][
-                                "Include session's availbility in alert"
-                            ]
-                            and BLL.readPreferences()["Preferences"][
-                                "Include session's availbility in alert"
-                            ][sessionNumber]
-                            == True
-                        ):
-                            listOfAvailableSessions.append(sessionNumber)
-                except:
+    tableXPath = ""
+    count = 0
+    while True:
+        try:
+            driver.find_element_by_xpath(
+                "/html/body/table/tbody/tr/td[2]/form/table[1]/tbody/tr[" + str(count) + "]/td/table/tbody"
+            )
+            tableXPath = (
+                "/html/body/table/tbody/tr/td[2]/form/table[1]/tbody/tr[" + str(count) + "]/td/table/tbody"
+            )
+            break
+        except:
+            if count == 100:
+                break
+            count += 1
+    if tableXPath != "":
+        table = driver.find_element_by_xpath(tableXPath)
+        BLL.printMessage("Found table")
+        WebDriverWait(driver, 10).until(ec.presence_of_element_located((By.NAME, "slot")))
+        # iterate over all the rows
+        for row in table.find_elements(By.TAG_NAME, "tr")[2:]:
+            listOfAvailableSessions = []
+            for index, obj in enumerate(row.find_elements(By.TAG_NAME, "td")):
+                if index == 0:
+                    dateOfLesson = obj.text.split("\n")
+                elif index == 1:
                     pass
-        BLL.printMessage(str(listOfAvailableSessions) + " sessions available")
-        lessonList[dateOfLesson[0]] = listOfAvailableSessions
+                else:
+                    # Check if session is selectable
+                    BLL.printMessage(
+                        "Checking "
+                        + dateOfLesson[0]
+                        + " "
+                        + dateOfLesson[1]
+                        + " session "
+                        + str(index - 1)
+                    )
+                    try:
+                        if obj.find_element(By.TAG_NAME, "input"):
+                            sessionNumber = index - 1
+                            if (
+                                sessionNumber
+                                in BLL.readPreferences()["Preferences"][
+                                    "Include session's availbility in alert"
+                                ]
+                                and BLL.readPreferences()["Preferences"][
+                                    "Include session's availbility in alert"
+                                ][sessionNumber]
+                                == True
+                            ):
+                                listOfAvailableSessions.append(sessionNumber)
+                    except:
+                        pass
+            BLL.printMessage(str(listOfAvailableSessions) + " sessions available")
+            lessonList[dateOfLesson[0]] = listOfAvailableSessions
+    else:
+        printMessage("No table found")
     driver.switch_to.default_content()
     return lessonList
 
 
 # Construct message based to data available on the web,
 # and send it out to the user via telegram
-def analyseExtractedData(lessonList):
-    dateToCheckTill = datetime.today().date() + relativedelta(
-        days=readPreferences()["Preferences"]["Check number of days in advance"]
-    )
-    messageToBeSentFlag = False
-    message = "Slots available:"
-    for lessonListDatesKey in lessonList:
-        dateOfSessions = datetime.strptime(lessonListDatesKey, "%d/%m/%Y").date()
-        if dateOfSessions <= dateToCheckTill:
-            # send notification to tele
-            if lessonList[lessonListDatesKey] != []:
-                message = AddDateDetailsToText(
-                    message, dateOfSessions, dateOfSessions.strftime("%A")
-                )
-                messageToBeSentFlag = True
-                for sessionNumber in lessonList[lessonListDatesKey]:
-                    message = AddSessionDetailsToText(
-                        message, dateOfSessions, sessionNumber
+def analyseExtractedData(lessonList, subjectName):
+    if len(lessonList) != 0:
+        dateToCheckTill = datetime.today().date() + relativedelta(
+            days=readPreferences()["Preferences"]["Check number of days in advance"]
+        )
+        messageToBeSentFlag = False
+        message = "Subject No.: " + subjectName + "\n\n\nSlots available:"
+        for lessonListDatesKey in lessonList:
+            dateOfSessions = datetime.strptime(lessonListDatesKey, "%d/%m/%Y").date()
+            if dateOfSessions <= dateToCheckTill:
+                # send notification to tele
+                if lessonList[lessonListDatesKey] != []:
+                    message = AddDateDetailsToText(
+                        message, dateOfSessions, dateOfSessions.strftime("%A")
                     )
-    message = AddWebsiteToText(message)
-    if messageToBeSentFlag:
-        telegramBot.sendMessage(message)
+                    messageToBeSentFlag = True
+                    for sessionNumber in lessonList[lessonListDatesKey]:
+                        message = AddSessionDetailsToText(
+                            message, dateOfSessions, sessionNumber
+                        )
+        message = AddWebsiteToText(message)
+        if messageToBeSentFlag:
+            telegramBot.sendMessage(message)
 
 
 # Concatenate day and date of available sessions into the message
@@ -277,15 +298,12 @@ def isPeakSession(date, sessionNumber):
 def reloadSessionsAvailbility(driver):
     # Check if kicked out of session
     try:
-        driver.switch_to.frame(driver.find_element(By.NAME, "mainFrame"))
-        driver.find_element_by_xpath('//input[@name="btnBack"]').click()
-        driver.switch_to.default_content()
-        selectSessions(driver, False)
-        try:
-            alertHandler(driver)
-        except:
-            BLL.printMessage("No alert to dismiss")
-        analyseExtractedData(readAllRowCells(driver))
+        subjectsAvailable = countNumberOfAvailableSubjects(driver)
+        for i in range(subjectsAvailable):
+            practicalTrainingBookingTab(driver)
+            selectedSession = selectSessions(driver, i + 1)
+            if  selectedSession[0] == True:
+                analyseExtractedData(readAllRowCells(driver), selectedSession[1])
     except:
         if BLL.readPreferences()["Preferences"]["Notify on session expired"] == True:
             telegramBot.sendMessage("Session expired, relogging in")
@@ -310,6 +328,10 @@ def LogicalFullSteps(driver):
     continuePageNotSecure(driver)
     if readPreferences()["Preferences"]["Course selection required"] == True:
         courseSelection(driver)
-    practicalTrainingBookingTab(driver)
-    selectSessions(driver)
-    analyseExtractedData(readAllRowCells(driver))
+    # practicalTrainingBookingTab(driver)
+    subjectsAvailable = countNumberOfAvailableSubjects(driver)
+    for i in range(subjectsAvailable):
+        practicalTrainingBookingTab(driver)
+        selectedSession = selectSessions(driver, i + 1)
+        if selectedSession[0] == True:
+            analyseExtractedData(readAllRowCells(driver), selectedSession[1])
