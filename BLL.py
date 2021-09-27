@@ -99,8 +99,10 @@ def practicalTrainingBookingTab(driver):
     driver.switch_to.default_content()
 
 
+# Go to practical booking tab and count the number of subjects present
 def countNumberOfAvailableSubjects(driver):
     practicalTrainingBookingTab(driver)
+    time.sleep(3)
     driver.switch_to.frame(driver.find_element(By.NAME, "mainFrame"))
     subjectCount = driver.find_elements_by_xpath("/html/body/table/tbody/tr/td[2]/form/table/tbody/tr[1]/td[2]/descendant::input")
     printMessage("Number of subjects currently present: " + str(len(subjectCount)))
@@ -108,6 +110,7 @@ def countNumberOfAvailableSubjects(driver):
     return len(subjectCount)
 
 
+# Get the name of the currently selected subject name
 def readSubjectSelected(driver, selectedSubject):
     driver.switch_to.frame(driver.find_element(By.NAME, "mainFrame"))
     subjectName = driver.find_element_by_xpath("/html/body/table/tbody/tr/td[2]/form/table/tbody/tr[1]/td[2]/input[" + str(selectedSubject) + "]").get_attribute("value")
@@ -299,6 +302,8 @@ def reloadSessionsAvailbility(driver):
     # Check if kicked out of session
     try:
         subjectsAvailable = countNumberOfAvailableSubjects(driver)
+        if subjectsAvailable == 0:
+            raise Exception()
         for i in range(subjectsAvailable):
             practicalTrainingBookingTab(driver)
             selectedSession = selectSessions(driver, i + 1)
@@ -309,10 +314,11 @@ def reloadSessionsAvailbility(driver):
             telegramBot.sendMessage("Session expired, relogging in")
         BLL.printMessage("Current session expired, relogging in")
         driver.switch_to.default_content()
-        driver.find_element_by_xpath(
-            '//a[@href="https://info.bbdc.sg/members-login/"]'
-        ).click()
+        time.sleep(3)
+        driver.get("https://info.bbdc.sg/members-login/")
+        time.sleep(3)
         LogicalFullSteps(driver)
+        time.sleep(3)
 
 
 # Logical steps taken from logging in till sending details to user
