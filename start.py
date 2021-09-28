@@ -32,13 +32,6 @@ def startDriver(initalizeDisplay=False):
     return driver
 
 
-# Kill existing driver
-def restartDriver(driver):
-    driver.quit()
-    driver = None
-    return startDriver()
-
-
 if __name__ == "__main__":
     # Main Program
     # Setup credentials and preferences YAML files
@@ -47,12 +40,12 @@ if __name__ == "__main__":
 
     driver = startDriver(True)
 
-    restartDriverFlag = True
+    goToLoginPage = True
     while True:
         try:
-            if restartDriverFlag:
+            if goToLoginPage:
                 BLL.LogicalFullSteps(driver)
-                restartDriverFlag = False
+                goToLoginPage = False
             BLL.printMessage(
                 "Snoozing for "
                 + str(BLL.readPreferences()["Preferences"]["Refresh time interval"])
@@ -67,6 +60,6 @@ if __name__ == "__main__":
             )
             telegramBot.sendMessage(e)
             BLL.printMessage(repr(e))
-            driver = restartDriver(driver)
-            restartDriverFlag = True
+            driver.get("https://info.bbdc.sg/members-login/")
+            goToLoginPage = True
             time.sleep(5)

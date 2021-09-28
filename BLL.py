@@ -104,7 +104,9 @@ def countNumberOfAvailableSubjects(driver):
     practicalTrainingBookingTab(driver)
     time.sleep(3)
     driver.switch_to.frame(driver.find_element(By.NAME, "mainFrame"))
-    subjectCount = driver.find_elements_by_xpath("/html/body/table/tbody/tr/td[2]/form/table/tbody/tr[1]/td[2]/descendant::input")
+    subjectCount = driver.find_elements_by_xpath(
+        "/html/body/table/tbody/tr/td[2]/form/table/tbody/tr[1]/td[2]/descendant::input"
+    )
     printMessage("Number of subjects currently present: " + str(len(subjectCount)))
     driver.switch_to.default_content()
     return len(subjectCount)
@@ -113,7 +115,11 @@ def countNumberOfAvailableSubjects(driver):
 # Get the name of the currently selected subject name
 def readSubjectSelected(driver, selectedSubject):
     driver.switch_to.frame(driver.find_element(By.NAME, "mainFrame"))
-    subjectName = driver.find_element_by_xpath("/html/body/table/tbody/tr/td[2]/form/table/tbody/tr[1]/td[2]/input[" + str(selectedSubject) + "]").get_attribute("value")
+    subjectName = driver.find_element_by_xpath(
+        "/html/body/table/tbody/tr/td[2]/form/table/tbody/tr[1]/td[2]/input["
+        + str(selectedSubject)
+        + "]"
+    ).get_attribute("value")
     driver.switch_to.default_content()
     return subjectName
 
@@ -121,8 +127,16 @@ def readSubjectSelected(driver, selectedSubject):
 # Select all month, all sessions and all days
 def selectSessions(driver, subjectSelection):
     driver.switch_to.frame(driver.find_element(By.NAME, "mainFrame"))
-    driver.find_element_by_xpath("/html/body/table/tbody/tr/td[2]/form/table/tbody/tr[1]/td[2]/input[" + str(subjectSelection) + "]").click()
-    if driver.find_element_by_xpath("/html/body/table/tbody/tr/td[2]/form/table/tbody/tr[1]/td[2]/input[" + str(subjectSelection) + "]").is_selected():
+    driver.find_element_by_xpath(
+        "/html/body/table/tbody/tr/td[2]/form/table/tbody/tr[1]/td[2]/input["
+        + str(subjectSelection)
+        + "]"
+    ).click()
+    if driver.find_element_by_xpath(
+        "/html/body/table/tbody/tr/td[2]/form/table/tbody/tr[1]/td[2]/input["
+        + str(subjectSelection)
+        + "]"
+    ).is_selected():
         driver.switch_to.default_content()
         subjectName = readSubjectSelected(driver, subjectSelection)
         driver.switch_to.frame(driver.find_element(By.NAME, "mainFrame"))
@@ -166,10 +180,14 @@ def readAllRowCells(driver):
     while True:
         try:
             driver.find_element_by_xpath(
-                "/html/body/table/tbody/tr/td[2]/form/table[1]/tbody/tr[" + str(count) + "]/td/table/tbody"
+                "/html/body/table/tbody/tr/td[2]/form/table[1]/tbody/tr["
+                + str(count)
+                + "]/td/table/tbody"
             )
             tableXPath = (
-                "/html/body/table/tbody/tr/td[2]/form/table[1]/tbody/tr[" + str(count) + "]/td/table/tbody"
+                "/html/body/table/tbody/tr/td[2]/form/table[1]/tbody/tr["
+                + str(count)
+                + "]/td/table/tbody"
             )
             break
         except:
@@ -179,7 +197,9 @@ def readAllRowCells(driver):
     if tableXPath != "":
         table = driver.find_element_by_xpath(tableXPath)
         BLL.printMessage("Found table")
-        WebDriverWait(driver, 10).until(ec.presence_of_element_located((By.NAME, "slot")))
+        WebDriverWait(driver, 10).until(
+            ec.presence_of_element_located((By.NAME, "slot"))
+        )
         # iterate over all the rows
         for row in table.find_elements(By.TAG_NAME, "tr")[2:]:
             listOfAvailableSessions = []
@@ -306,9 +326,13 @@ def reloadSessionsAvailbility(driver):
             raise Exception()
         for i in range(subjectsAvailable):
             practicalTrainingBookingTab(driver)
-            selectedSession = selectSessions(driver, i + 1)
-            if  selectedSession[0] == True:
-                analyseExtractedData(readAllRowCells(driver), selectedSession[1])
+            selectedSubject = selectSessions(driver, i + 1)
+            if selectedSubject[0] == True:
+                analyseExtractedData(readAllRowCells(driver), selectedSubject[1])
+            else:
+                printMessage("Unable to select subject " + selectedSubject[1])
+                printMessage("Skipping check for " + selectedSubject[1])
+
     except:
         if BLL.readPreferences()["Preferences"]["Notify on session expired"] == True:
             telegramBot.sendMessage("Session expired, relogging in")

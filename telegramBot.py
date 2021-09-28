@@ -6,19 +6,23 @@ import telebot
 
 import BLL
 
+bot = None
 
 # sends message to user's telegram
-def sendMessage(text, botID="", ChatID=""):
-    if botID == "" and ChatID == "":
+def sendMessage(text, botID="", chatID=""):
+    global bot
+    if botID != "" and chatID != "":
+        bot = telebot.TeleBot(botID)
+        bot.send_message(chatID, text)
+    elif bot == None:
         bot = telebot.TeleBot(
             BLL.readCredentials()["Telegram credentials"]["telegram bot ID"]
         )
         bot.send_message(BLL.readCredentials()["Telegram credentials"]["Chat ID"], text)
-    elif botID != "" and ChatID != "":
-        bot = telebot.TeleBot(botID)
-        bot.send_message(ChatID, text)
+    elif bot != None:
+        bot.send_message(BLL.readCredentials()["Telegram credentials"]["Chat ID"], text)
     else:
-        raise ValueError("Both botID and ChatID has to have a valid string")
+        BLL.printMessage("ERROR: Unable to send message to device")
 
 
 # Make GET request to URL and parse HTTP response to JSON
