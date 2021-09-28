@@ -126,6 +126,7 @@ def readSubjectSelected(driver, selectedSubject):
 
 # Select all month, all sessions and all days
 def selectSessions(driver, subjectSelection):
+    subjectName = readSubjectSelected(driver, subjectSelection)
     driver.switch_to.frame(driver.find_element(By.NAME, "mainFrame"))
     driver.find_element_by_xpath(
         "/html/body/table/tbody/tr/td[2]/form/table/tbody/tr[1]/td[2]/input["
@@ -138,7 +139,6 @@ def selectSessions(driver, subjectSelection):
         + "]"
     ).is_selected():
         driver.switch_to.default_content()
-        subjectName = readSubjectSelected(driver, subjectSelection)
         driver.switch_to.frame(driver.find_element(By.NAME, "mainFrame"))
         BLL.printMessage("Selecting sessions")
         wait = WebDriverWait(driver, 5)
@@ -166,7 +166,7 @@ def selectSessions(driver, subjectSelection):
         return True, subjectName
     else:
         driver.switch_to.default_content()
-        return False, None
+        return False, subjectName
 
 
 # Goes through every row and every cell,
@@ -330,8 +330,8 @@ def reloadSessionsAvailbility(driver):
             if selectedSubject[0] == True:
                 analyseExtractedData(readAllRowCells(driver), selectedSubject[1])
             else:
-                printMessage("Unable to select subject " + selectedSubject[1])
-                printMessage("Skipping check for " + selectedSubject[1])
+                printMessage("Unable to select subject " + str(selectedSubject[1]))
+                printMessage("Skipping check for subject " + str(selectedSubject[1]))
 
     except:
         if BLL.readPreferences()["Preferences"]["Notify on session expired"] == True:
@@ -362,6 +362,9 @@ def LogicalFullSteps(driver):
     subjectsAvailable = countNumberOfAvailableSubjects(driver)
     for i in range(subjectsAvailable):
         practicalTrainingBookingTab(driver)
-        selectedSession = selectSessions(driver, i + 1)
-        if selectedSession[0] == True:
-            analyseExtractedData(readAllRowCells(driver), selectedSession[1])
+        selectedSubject = selectSessions(driver, i + 1)
+        if selectedSubject[0] == True:
+            analyseExtractedData(readAllRowCells(driver), selectedSubject[1])
+        else:
+            printMessage("Unable to select subject " + str(selectedSubject[1]))
+            printMessage("Skipping check for subject " + str(selectedSubject[1]))
