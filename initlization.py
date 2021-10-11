@@ -12,7 +12,6 @@ def generateSettingsTemplate():
     if not os.path.exists(os.path.join("settings", "preferences.yaml")):
         settingsTemplate = {
             "Preferences": {
-                "Course selection required": False,
                 "Check number of days in advance": 7,
                 "Refresh time interval": 600,
                 "Notify on session expired": True,
@@ -28,20 +27,6 @@ def generateSettingsTemplate():
                 },
             },
         }
-
-        courseSelectionRequirement = input(
-            "["
-            + datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-            + "] "
-            + "Does course selection page show after logging in? [Y/n]: "
-        )
-        if courseSelectionRequirement.lower() == "y":
-            settingsTemplate["Preferences"]["Course selection required"] = True
-        elif courseSelectionRequirement.lower() == "n":
-            settingsTemplate["Preferences"]["Course selection required"] = False
-        else:
-            BLL.printMessage("Course selection page setting has been set to False")
-            settingsTemplate["Preferences"]["Course selection required"] = False
 
         if not os.path.exists(os.path.join("settings")):
             os.mkdir(os.path.join("settings"))

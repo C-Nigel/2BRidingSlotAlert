@@ -76,20 +76,23 @@ def continuePageNotSecure(driver):
 def courseSelection(driver):
     BLL.printMessage("Selecting course")
     time.sleep(2)
-    driver.find_element_by_xpath('//input[@value="Submit"]').click()
+    try:
+        courses = driver.find_elements_by_xpath("/html/body/table[2]/tbody/tr[1]/td/form/table/tbody/tr[3]/td/descendant::input")
+        for course in range(len(courses)):
+            courseSelected = driver.find_element_by_xpath(
+        "/html/body/table[2]/tbody/tr[1]/td/form/table/tbody/tr[3]/td/input[" + str(course + 1) + "]")
+            if "2B" in courseSelected.get_attribute("value"):
+                courseSelected.click()
+                break
+        time.sleep(2)
+        driver.find_element_by_xpath('//input[@value="Submit"]').click()
+    except:
+        BLL.printMessage("No course to select")
+        pass
 
 
 # Select Pratical Training -> Booking tab from sidebar
 def practicalTrainingBookingTab(driver):
-    try:
-        driver.find_element(By.NAME, "leftFrame")
-    except:
-        BLL.printMessage("Unable to select practical booking tab")
-        BLL.printMessage("Is course selection page currently present?")
-        BLL.printMessage(
-            """Change "Course selection required" value to 'True' in "settings/preferences.yaml" and re-start application"""
-        )
-        sys.exit(1)
     BLL.printMessage("Selecting booking tab")
     time.sleep(2)
     driver.switch_to.frame(driver.find_element(By.NAME, "leftFrame"))
@@ -356,8 +359,7 @@ def LogicalFullSteps(driver):
     except:
         pass
     continuePageNotSecure(driver)
-    if readPreferences()["Preferences"]["Course selection required"] == True:
-        courseSelection(driver)
+    courseSelection(driver)
     # practicalTrainingBookingTab(driver)
     subjectsAvailable = countNumberOfAvailableSubjects(driver)
     for i in range(subjectsAvailable):
