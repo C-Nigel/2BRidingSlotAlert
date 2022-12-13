@@ -1,3 +1,5 @@
+**ATTENTION: Bot only works with BBDC's old webpage interface**
+
 # BBDC (Bukit Batok Driving Centre)
 ## Class 2B pratical slot availbility alert via telegram
 
